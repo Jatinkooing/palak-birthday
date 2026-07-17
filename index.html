@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday Palak! 🎈</title>
+    <style>
+        /* === BASE STYLES & RESET === */
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fdf6e3; 
+            color: #333;
+            overflow-x: hidden; 
+            overflow-y: hidden; /* Locked until gift opens */
+            min-height: 100vh;
+        }
+
+        /* === TOP RIGHT UI (Intro Bg Music) === */
+        #basic-player {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fff;
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            border: 2px solid #ff6b81;
+            font-weight: bold;
+            color: #ff6b81;
+            z-index: 3000; /* Stays above everything, even the gift screen */
+            transition: transform 0.2s;
+        }
+
+        #basic-player:hover { transform: scale(1.05); }
+
+        h1 {
+            color: #ff6b81;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+            margin-top: 20px;
+        }
+
+        /* === SCREEN 1: GIFT BOX OVERLAY === */
+        #gift-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: #fdf6e3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .gift-wrapper {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .gift-wrapper:hover { transform: scale(1.05); }
+
+        .gift-box {
+            position: relative;
+            width: 160px;
+            height: 140px;
+            background: #ff6b81;
+            border-radius: 8px;
+            margin: 0 auto;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        .gift-lid {
+            position: absolute;
+            top: -20px;
+            left: -10px;
+            width: 180px;
+            height: 40px;
+            background: #ff4760;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.6s ease, opacity 0.6s ease;
+            z-index: 2;
+        }
+
+        .gift-ribbon-v { position: absolute; left: 70px; width: 20px; height: 100%; background: #ffd700; z-index: 1; }
+        .gift-ribbon-h { position: absolute; top: 60px; width: 100%; height: 20px; background: #ffd700; z-index: 1; }
+        .gift-lid::after { content: ''; position: absolute; left: 80px; width: 20px; height: 100%; background: #ffd700; }
+        
+        .gift-box.open .gift-lid {
+            transform: translateY(-60px) rotate(-15deg);
+            opacity: 0;
+        }
+
+        .gift-text {
+            margin-top: 35px;
+            font-size: 1.2rem;
+            color: #ff6b81;
+            font-weight: bold;
+            transition: opacity 0.3s ease;
+        }
+
+        /* === MAIN PAGE CONTENT === */
+        #main-content {
+            display: none;
+            opacity: 0;
+            transition: opacity 1s ease;
+            width: 100%;
+            padding: 20px;
+            min-height: 100vh;
+            padding-top: 80px; /* Gives space for top player */
+        }
+
+        #intro-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* The Letter (Stays visible) */
+        .letter-wrapper {
+            background: #fff;
+            width: 100%;
+            max-width: 500px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            line-height: 1.6;
+            font-size: 1.1rem;
+            color: #444;
+            border-top: 5px solid #ff6b81;
+        }
+
+        .letter-wrapper p { margin-bottom: 15px; margin-top: 0; }
+        
+        /* The Envelope (Fades out) */
+        .envelope-wrapper {
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+            margin-bottom: 20px;
+            max-height: 300px;
+            opacity: 1;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .envelope-wrapper:hover { transform: scale(1.05); }
+
+        .envelope-hidden {
+            opacity: 0 !important;
+            max-height: 0 !important;
+            margin: 0 !important;
+            transform: scale(0.9);
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .envelope-text {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 1.2rem;
+            color: #ff6b81;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: opacity 0.5s;
+        }
+
+        .envelope {
+            width: 260px;
+            height: 170px;
+            background: #ff8fa3;
+            position: relative;
+            border-radius: 8px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+
+        .envelope::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            border-left: 130px solid transparent;
+            border-right: 130px solid transparent;
+            border-top: 100px solid #ff6b81;
+            border-bottom: 70px solid transparent;
+            transform-origin: top;
+            transition: transform 0.8s ease;
+            z-index: 2;
+        }
+
+        .envelope::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            border-left: 130px solid #ff7a91;
+            border-right: 130px solid #ff7a91;
+            border-top: 85px solid transparent;
+            border-bottom: 85px solid #ff9db0;
+            border-radius: 0 0 8px 8px;
+            z-index: 1;
+        }
+
+        .envelope.open::before { transform: rotateX(180deg); }
+
+        /* === SCROLLABLE GALLERY === */
+        #gallery-section {
+            display: flex; 
+            flex-direction: column;
+            align-items: center;
+            gap: 50px;
+            padding: 10px 0 120px 0; 
+            width: 100%;
+            
+            opacity: 0;
+            max-height: 0; 
+            overflow: hidden;
+            transition: opacity 1.2s ease, max-height 0.1s;
+        }
+
+        #gallery-section.unlocked {
+            opacity: 1;
+            max-height: 10000px; 
+            overflow: visible;
+        }
+
+        .gallery-title {
+            font-size: 2rem;
+            color: #ff6b81;
+            margin-bottom: 10px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .media-item {
+            width: 100%;
+            max-width: 380px; 
+            aspect-ratio: 9/16; 
+            background: #fff;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .media-item.landscape {
+            max-width: 650px; 
+            aspect-ratio: 16/9;
+        }
+
+        .media-item img, .media-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #111;
+        }
+
+        /* === FLOATING MAIN MUSIC PLAYER (UI GLITCH FIXED) === */
+        #floating-player {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px); 
+            background: #fff;
+            padding: 10px 15px;
+            border-radius: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 5px;
+            border: 2px solid #ff6b81;
+            z-index: 1000;
+            
+            /* UI Fixes for mobile */
+            width: 95%;
+            max-width: 400px;
+            flex-wrap: nowrap; /* Prevents wrapping onto a new line */
+            
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #floating-player.visible { transform: translateX(-50%) translateY(0); }
+
+        .ctrl-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #ff6b81;
+            transition: transform 0.1s, background 0.2s;
+            border-radius: 50%;
+            
+            /* UI Fixes for mobile buttons */
+            width: 35px;
+            height: 35px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0; /* Prevents button from squishing */
+            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; /* Ensures emojis load correctly */
+        }
+
+        .ctrl-btn:hover { background: #ffe3e7; }
+        .ctrl-btn:active { transform: scale(0.9); }
+        .active-repeat { background: #ff6b81 !important; color: white !important; }
+
+        .now-playing-text {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #ff6b81;
+            margin: 0 5px;
+            text-align: center;
+            
+            /* UI Fixes to handle long song names */
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* === CONFETTI === */
+        .confetti {
+            position: fixed;
+            top: -20px;
+            width: 10px;
+            height: 10px;
+            background-color: #ff6b81;
+            opacity: 0.8;
+            z-index: 9999;
+            animation: gentleFall linear forwards;
+            pointer-events: none;
+        }
+
+        @keyframes gentleFall {
+            to { transform: translateY(110vh) rotate(720deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- AUDIO ELEMENTS -->
+    <audio id="bg-audio" src="sgbg.mp3" loop></audio>
+    <audio id="main-audio" src="sng1.mp3"></audio>
+
+    <!-- TOP RIGHT UI: BASIC BG PLAYER (Now always visible) -->
+    <div id="basic-player" onclick="toggleBgMusic()">
+        <span id="basic-music-icon">🔇</span> <span id="basic-music-text">Play Bg Music</span>
+    </div>
+
+    <!-- SCREEN 1: GIFT BOX OVERLAY -->
+    <div id="gift-screen">
+        <h1 style="margin-top: 40px;">Happy Birthday Palak! 🎉</h1>
+        <div class="gift-wrapper" onclick="openGift()">
+            <div class="gift-box" id="the-gift">
+                <div class="gift-lid"></div>
+                <div class="gift-ribbon-v"></div>
+                <div class="gift-ribbon-h"></div>
+            </div>
+            <div class="gift-text" id="gift-text">Tap to Open</div>
+        </div>
+    </div>
+
+    <!-- FLOATING MAIN PLAYER -->
+    <div id="floating-player">
+        <button class="ctrl-btn" onclick="prevSong()" title="Previous">⏮</button>
+        <button class="ctrl-btn" onclick="playPauseSong()" id="btn-playpause" title="Play/Pause">⏸</button>
+        <button class="ctrl-btn" onclick="stopSong()" title="Stop">⏹</button>
+        <button class="ctrl-btn" onclick="nextSong()" title="Next">⏭</button>
+        <span class="now-playing-text" id="now-playing-title">Song 1</span>
+        <button class="ctrl-btn" onclick="toggleRepeat()" id="btn-repeat" title="Repeat">🔁</button>
+        <button class="ctrl-btn" onclick="toggleMute()" id="btn-mute" title="Mute">🔊</button>
+    </div>
+
+    <!-- MAIN PAGE CONTENT -->
+    <div id="main-content">
+        
+        <div id="intro-container">
+            <!-- The Letter (Stays) -->
+            <div class="letter-wrapper" id="the-letter">
+                <p><strong>Dear Palak,</strong></p>
+                <p>Wishing you the happiest of birthdays today. May this coming year bring you immense joy, success in all your endeavors, and countless beautiful moments to cherish.</p>
+                <p>I have made a little collection to celebrate this special day.</p>
+            </div>
+
+            <!-- The Envelope (Fades) -->
+            <div class="envelope-wrapper" id="the-envelope" onclick="openEnvelope()">
+                <div class="envelope" id="env"></div>
+                <div class="envelope-text" id="env-text">Tap to Unlock Memories</div>
+            </div>
+        </div>
+
+        <!-- Scrollable Gallery -->
+        <div id="gallery-section">
+            <h2 class="gallery-title">Memories ✨</h2>
+            
+            <div class="media-item"><img src="img1.jpg" alt="Memory 1"></div>
+            <div class="media-item"><video src="video1.mp4#t=0.001" controls playsinline preload="metadata"></video></div>
+            
+            <div class="media-item"><img src="img2.jpg" alt="Memory 2"></div>
+            <div class="media-item"><video src="video2.mp4#t=0.001" controls playsinline preload="metadata"></video></div>
+            
+            <div class="media-item"><img src="img3.jpg" alt="Memory 3"></div>
+            <div class="media-item"><video src="video3.mp4#t=0.001" controls playsinline preload="metadata"></video></div>
+            
+            <div class="media-item"><video src="video4.mp4#t=0.001" controls playsinline preload="metadata"></video></div>
+
+            <div class="media-item landscape"><img src="img4.jpg" alt="Final Memory"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- AUDIO STATE & DATA ---
+        const bgAudio = document.getElementById('bg-audio');
+        const mainAudio = document.getElementById('main-audio');
+        
+        const songs = [
+            { title: "Song 1", file: "sng1.mp3" },
+            { title: "Song 2", file: "sng2.mp3" },
+            { title: "Song 3", file: "sng3.mp3" },
+            { title: "Song 4", file: "sng4.mp3" },
+            { title: "Song 5", file: "sng5.mp3" }
+        ];
+        
+        let currentSongIndex = 0;
+        let isBgPlaying = false;
+        let isMainPlaying = false; 
+        let isMuted = false;
+        let wasMainPlayingBeforeVideo = false;
+
+        // --- INTRO BACKGROUND MUSIC ---
+        function toggleBgMusic() {
+            if (isBgPlaying) {
+                bgAudio.pause();
+                document.getElementById('basic-music-text').innerText = "Play Bg Music";
+                document.getElementById('basic-music-icon').innerText = "🔇";
+            } else {
+                // If main music is playing, pause it to prevent overlap
+                if (isMainPlaying) {
+                    mainAudio.pause();
+                    isMainPlaying = false;
+                    updatePlayPauseIcon();
+                }
+                
+                bgAudio.play();
+                document.getElementById('basic-music-text').innerText = "Pause Music";
+                document.getElementById('basic-music-icon').innerText = "🔊";
+            }
+            isBgPlaying = !isBgPlaying;
+        }
+
+        // --- STEP 1: OPEN GIFT BOX ---
+        function openGift() {
+            document.getElementById('the-gift').classList.add('open');
+            document.getElementById('gift-text').style.opacity = '0';
+            
+            // Auto-play BG music on first interaction if not already playing
+            if (!isBgPlaying) {
+                toggleBgMusic();
+            }
+
+            setTimeout(() => {
+                const giftScreen = document.getElementById('gift-screen');
+                const mainContent = document.getElementById('main-content');
+                
+                giftScreen.style.opacity = '0';
+                
+                setTimeout(() => {
+                    giftScreen.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    document.body.style.overflowY = 'auto'; 
+                    setTimeout(() => mainContent.style.opacity = '1', 50);
+                }, 800);
+            }, 600);
+        }
+
+        // --- STEP 2: OPEN ENVELOPE (UNLOCK GALLERY) ---
+        function openEnvelope() {
+            // 1. Open Flap
+            document.getElementById('env').classList.add('open');
+            document.getElementById('env-text').style.opacity = '0';
+            fireConfetti();
+
+            // 2. Stop background music (but keep the button visible)
+            if (isBgPlaying) {
+                toggleBgMusic();
+            }
+
+            // 3. Fade out envelope & reveal gallery
+            setTimeout(() => {
+                // Envelope fades and shrinks away
+                document.getElementById('the-envelope').classList.add('envelope-hidden');
+                
+                // Gallery slides up perfectly below the letter
+                const gallery = document.getElementById('gallery-section');
+                gallery.classList.add('unlocked');
+                
+                document.getElementById('floating-player').classList.add('visible');
+                
+                // Automatically load and play main gallery song
+                loadAndPlayMainSong();
+                
+                window.scrollBy({ top: 150, behavior: 'smooth' });
+            }, 800); 
+        }
+
+        // --- FLOATING PLAYER CONTROLS ---
+        function loadAndPlayMainSong() {
+            mainAudio.src = songs[currentSongIndex].file;
+            document.getElementById('now-playing-title').innerText = songs[currentSongIndex].title;
+            mainAudio.play();
+            isMainPlaying = true;
+            updatePlayPauseIcon();
+        }
+
+        function playPauseSong() {
+            if (isMainPlaying) {
+                mainAudio.pause();
+                isMainPlaying = false;
+            } else {
+                // Prevent overlapping by stopping BG music if it was playing
+                if (isBgPlaying) toggleBgMusic();
+
+                mainAudio.play();
+                isMainPlaying = true;
+            }
+            updatePlayPauseIcon();
+        }
+
+        function stopSong() {
+            mainAudio.pause();
+            mainAudio.currentTime = 0;
+            isMainPlaying = false;
+            updatePlayPauseIcon();
+        }
+
+        function nextSong() {
+            currentSongIndex = (currentSongIndex + 1) % songs.length;
+            loadAndPlayMainSong();
+        }
+
+        function prevSong() {
+            currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+            loadAndPlayMainSong();
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            mainAudio.muted = isMuted;
+            document.getElementById('btn-mute').innerText = isMuted ? "🔇" : "🔊";
+        }
+
+        function toggleRepeat() {
+            mainAudio.loop = !mainAudio.loop;
+            const btn = document.getElementById('btn-repeat');
+            if (mainAudio.loop) {
+                btn.classList.add('active-repeat');
+            } else {
+                btn.classList.remove('active-repeat');
+            }
+        }
+
+        function updatePlayPauseIcon() {
+            document.getElementById('btn-playpause').innerText = isMainPlaying ? "⏸" : "▶";
+        }
+
+        mainAudio.addEventListener('ended', () => {
+            if (!mainAudio.loop) nextSong();
+        });
+
+        // --- SINGLE VIDEO PLAYBACK & AUTO-MUTE SYNC ---
+        const videos = document.querySelectorAll('video');
+        
+        function checkAndResumeMusic() {
+            let anyVideoPlaying = false;
+            videos.forEach(v => {
+                if (!v.paused && !v.ended) anyVideoPlaying = true;
+            });
+            
+            if (!anyVideoPlaying && wasMainPlayingBeforeVideo) {
+                mainAudio.play();
+                isMainPlaying = true;
+                updatePlayPauseIcon();
+            }
+        }
+
+        videos.forEach(video => {
+            video.addEventListener('play', (e) => {
+                // Pause all OTHER videos immediately
+                videos.forEach(v => {
+                    if (v !== e.target) v.pause();
+                });
+
+                // Handle background music sync
+                wasMainPlayingBeforeVideo = isMainPlaying; 
+                if (isMainPlaying) {
+                    mainAudio.pause();
+                    isMainPlaying = false; 
+                    updatePlayPauseIcon();
+                }
+            });
+            
+            video.addEventListener('pause', checkAndResumeMusic);
+            video.addEventListener('ended', checkAndResumeMusic);
+        });
+
+        // --- CONFETTI LOGIC ---
+        function fireConfetti() {
+            const colors = ['#ff6b81', '#ffc15e', '#5effb9', '#78b3ff'];
+            for (let i = 0; i < 60; i++) {
+                let conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = (Math.random() * 3 + 3) + 's'; 
+                conf.style.animationDelay = (Math.random() * 1.5) + 's';
+                if (Math.random() > 0.5) conf.style.borderRadius = '50%';
+                document.body.appendChild(conf);
+                setTimeout(() => conf.remove(), 7000); 
+            }
+        }
+    </script>
+</body>
+</html>
